@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.fh.shop.mapper.IBookMapper" >
+
+    <sql id="bookWhere">
+        <where>
+            <if test="bookName != null and bookName != ''">
+                bookName like concat('%',#{bookName},'%')
+            </if>
+            <if test="minPrice > 0 ">
+                and price &gt;= #{minPrice}
+            </if>
+            <if test="maxPrice > 0">
+                and price &lt;= #{maxPrice}
+            </if>
+        </where>
+    </sql>
+    <insert id="addBook" parameterType="com.fh.shop.po.Book">
+        insert into t_book(bookName,price) values (#{bookName},#{price})
+    </insert>
+    <delete id="deleteBook" parameterType="long">
+        delete from t_book where id = #{id}
+    </delete>
+    <select id="findBookCount" parameterType="com.fh.shop.param.BookParam" resultType="long">
+        select count(*) from t_book b left join t_booktype tb on b.typeId = tb.typeId
+        <include refid="bookWhere"/>
+    </select>
+    <select id="findBookList" parameterType="com.fh.shop.param.BookParam" resultType="com.fh.shop.vo.Books">
+        select t.* from (
+            select id,bookName,price,tb.typeName typeName
+            from t_book b
+            left join t_booktype tb on b.typeId = tb.typeId
+              order by b.id desc
+             <include refid="bookWhere"/>
+        )t  limit #{start},#{length}
+    </select>
+    <select id="getBookById" resultType="com.fh.shop.po.Book" parameterType="long">
+        select id,bookName,price from t_book where id=#{id}
+    </select>
+    <update id="updateBook" parameterType="com.fh.shop.po.Book">
+        update t_book set bookName = #{bookName},price = #{price} where id = #{id}
+    </update>
+    <delete id="deleteBacth">
+        delete from t_book where id in
+        <foreach collection="array" open="(" close=")" item="id" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>
